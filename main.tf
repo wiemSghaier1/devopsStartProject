@@ -11,10 +11,15 @@ provider "azurerm" {
   features {}
 }
 
+# resource group
+resource "azurerm_resource_group" "rgName" {
+  name     = azurerm_resource_group.rgName.name
+  location = var.location
+}
 
 data "azurerm_image" "packerimage" {
   name                = "PackerImageTest"
-  resource_group_name = var.resource_group_name
+  resource_group_name = azurerm_resource_group.rgName.name
 }
 
 output "image_id" {
@@ -27,7 +32,7 @@ output "image_id" {
 resource "azurerm_virtual_network" "udacity_vnet_test" {
   name                = "udacity_vnet_test"
   address_space       = ["10.0.0.0/16"]
-  resource_group_name = var.resource_group_name
+  resource_group_name = azurerm_resource_group.rgName.name
   location            = var.location
   tags = {
     tagname = "udacity"
@@ -39,7 +44,7 @@ resource "azurerm_virtual_network" "udacity_vnet_test" {
 
 resource "azurerm_subnet" "udacity_subnet_test" {
   name                 = "udacity_subnet_test"
-  resource_group_name  = var.resource_group_name
+  resource_group_name  = azurerm_resource_group.rgName.name
   virtual_network_name = azurerm_virtual_network.udacity_vnet_test.name
   address_prefixes     = ["10.0.1.0/24"]
 
@@ -49,7 +54,7 @@ resource "azurerm_subnet" "udacity_subnet_test" {
 
 resource "azurerm_network_security_group" "udacity_nsg" {
   name                = "nsg-test"
-  resource_group_name = var.resource_group_name
+  resource_group_name = azurerm_resource_group.rgName.name
   location            = var.location
   tags = {
     tagname = "udacity"
@@ -66,7 +71,7 @@ resource "azurerm_network_security_rule" "deny_internet" {
   destination_port_range      = "*"
   source_address_prefix       = "Internet"
   destination_address_prefix  = "*"
-  resource_group_name         = var.resource_group_name
+  resource_group_name         = azurerm_resource_group.rgName.name
   network_security_group_name = azurerm_network_security_group.udacity_nsg.name
 }
 
@@ -118,7 +123,7 @@ resource "azurerm_network_interface" "udacity_nic" {
   count               = var.vm_count
   name                = "nic-${count.index}"
   location            = var.location
-  resource_group_name = var.resource_group_name
+  resource_group_name = azurerm_resource_group.rgName.name
   tags = {
     tagname = "udacity"
   }
@@ -135,7 +140,7 @@ resource "azurerm_network_interface" "udacity_nic" {
 resource "azurerm_public_ip" "udacity_public_ip" {
   name                = "public-ip-test"
   location            = var.location
-  resource_group_name = var.resource_group_name
+  resource_group_name = azurerm_resource_group.rgName.name
   allocation_method   = "Dynamic"
   tags = {
     tagname = "udacity"
@@ -147,7 +152,7 @@ resource "azurerm_public_ip" "udacity_public_ip" {
 resource "azurerm_lb" "udacity_lb" {
   name                = "lb-test"
   location            = var.location
-  resource_group_name = var.resource_group_name
+  resource_group_name = azurerm_resource_group.rgName.name
 
   frontend_ip_configuration {
     name                 = "lb-frontend"
@@ -170,7 +175,7 @@ resource "azurerm_lb_backend_address_pool" "udacity_backend_pool" {
 resource "azurerm_availability_set" "udacity_availability_set" {
   name                = "availability-set"
   location            = var.location
-  resource_group_name = var.resource_group_name
+  resource_group_name = azurerm_resource_group.rgName.name
   tags = {
     tagname = "udacity"
   }
@@ -181,7 +186,7 @@ resource "azurerm_virtual_machine" "vm_udacity" {
   count                 = var.vm_count
   name                  = "VM-${count.index}"
   location              = var.location
-  resource_group_name   = var.resource_group_name
+  resource_group_name   = azurerm_resource_group.rgName.name
   availability_set_id   = azurerm_availability_set.udacity_availability_set.id
   network_interface_ids = [azurerm_network_interface.udacity_nic[count.index].id]
   vm_size               = "Standard_DS1_v2"
